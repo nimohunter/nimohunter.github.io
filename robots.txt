@@ -1,5 +1,4 @@
-# www.robotstxt.org/
+sitemap: /sitemap.xml
 
-# Allow crawling of all content
-User-agent: *
-Disallow:
+user-agent: EmailCollector
+disallow: /
