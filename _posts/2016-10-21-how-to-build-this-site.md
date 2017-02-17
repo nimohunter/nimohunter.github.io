@@ -145,11 +145,10 @@ Create a folder in `/nimo_www/html`   (of course you can use another folder), an
 docker run -d --restart=always --name=web -v /nimo_www/html:/usr/share/nginx/html  nginx
 ```
 
-
-and then, get the this docker's ip use :
+and then, get the this docker's ip use:
 
 ```
-docker inspect --format='{{.NetworkSettings.IPAddress}}' $CONTAINER_ID
+docker inspect --format='{{NetworkSettings.IPAddress}}' $CONTAINER_ID
 ```
 
 get the IP address like `172.17.0.3` modify these in `default.conf` 
