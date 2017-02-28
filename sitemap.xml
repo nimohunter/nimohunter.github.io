@@ -1,20 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd" xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 <url>
-<loc>http://localhost:4000/notes/download-this-theme.html</loc>
+<loc>/notes/download-this-theme.html</loc>
 <lastmod>2015-09-09T00:00:00+08:00</lastmod>
 </url>
 <url>
-<loc>http://localhost:4000/notes/how-to-build-this-site.html</loc>
+<loc>/notes/how-to-build-this-site.html</loc>
 <lastmod>2016-10-21T00:00:00+08:00</lastmod>
 </url>
 <url>
-<loc>http://localhost:4000/404</loc>
+<loc>/notes/Install-OpenCV3-QT-in-Debian.html</loc>
+<lastmod>2017-02-28T00:00:00+08:00</lastmod>
 </url>
 <url>
-<loc>http://localhost:4000/about</loc>
+<loc>/404</loc>
 </url>
 <url>
-<loc>http://localhost:4000/</loc>
+<loc>/about</loc>
+</url>
+<url>
+<loc>/</loc>
 </url>
 </urlset>

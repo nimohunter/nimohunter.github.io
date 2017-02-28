@@ -1,0 +1,47 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1" /><title>Install Opencv3 Qt In Debian</title><meta name="twitter:card" content="summary" /><meta name="twitter:site" content="@nimohunter" /><meta name="twitter:title" content="Install Opencv3 Qt In Debian" /><meta name="twitter:description" content="About Opencv, this is a wonderful CV library. But for some reason, the installation isn’t kindful for begenner.I try to use Visual Studio, but lots of Opencv DLL files makes me crazy. So I choose D..."><meta name="description" content="About Opencv, this is a wonderful CV library. But for some reason, the installation isn’t kindful for begenner.I try to use Visual Studio, but lots of Opencv..."><link rel="icon" href="/assets/favicon.png"><link rel="apple-touch-icon" href="/assets/touch-icon.png"><link href="https://fonts.googleapis.com/css?family=Karla" rel="stylesheet"><link rel="stylesheet" href="/assets/core.css"><link rel="canonical" href="/notes/Install-OpenCV3-QT-in-Debian.html"><link rel="alternate" type="application/atom+xml" title="Nimo" href="/feed.xml" /></head><body><aside class="logo"> <a href="/"> <img src="https://www.gravatar.com/avatar/54f1cca533c3438df8a75544ff239fa8.png?s=80" class="gravatar"> </a> <span class="logo-prompt">Back to Home</span></aside><main> <noscript><style> article .footnotes { display: block; }</style></noscript><article><div class="center"><h1>Install Opencv3 Qt In Debian</h1><time>February 28, 2017</time></div><div class="divider"></div><p>About Opencv, this is a wonderful CV library. But for some reason, the installation isn’t kindful for begenner.I try to use Visual Studio, but lots of Opencv DLL files makes me crazy. So I choose Debian platform, and Qt, which i feel more comfortable.</p><h3 id="1-prepare">1. Prepare</h3><p>We should install some dependencies.</p><h5 id="ubuntudebian">Ubuntu/Debian:</h5><div class="highlighter-rouge"><pre class="highlight"><code>ubuntu
+sudo apt-get install qt5-default
+apt-get install libgtk2.0-dev
+apt-get install pkg-config
+</code></pre></div><p>references: <a href="http://answers.opencv.org/question/46755/first-example-code-error/">first-example-code-error</a></p><h5 id="centos">CentOS</h5><div class="highlighter-rouge"><pre class="highlight"><code>yum install cmake gcc gcc-c++ gtk+-devel gimp-devel gimp-devel-tools gimp-help-browser \
+zlib-devel libtiff-devel libjpeg-devel libpng-devel gstreamer-devel \
+libavc1394-devel libraw1394-devel libdc1394-devel \
+jasper-devel jasper-utils swig python libtool nasm 
+</code></pre></div><p>if you don not install these dependecies, maybe you will see this error:</p><div class="highlighter-rouge"><pre class="highlight"><code>OpenCV Error: Unspecified error (The function is not implemented. Rebuild the library with Windows, GTK+ 2.x or Carbon support. If you are on Ubuntu or Debian, install libgtk2.0-dev and pkg-config, then re-run cmake or configure script) in cvNamedWindow,...................
+</code></pre></div><p>you have to remove all Opencv lib, and Reinstall all of them.</p><div class="highlighter-rouge"><pre class="highlight"><code>rm /usr/local/lib/libopencv*
+rm -fr /usr/local/include/opencv
+rm -fr /usr/local/include/opencv2
+</code></pre></div><h3 id="2-use-cmake-gui">2. use cmake-gui</h3><p>Maybe in your Linux, you have install cmake, but not include cmake-gui. Recommand you install cmake-gui to build opencv3.</p><ol><li>Fill in Opencv3 Source Code, Download from Opencv office site. Choose the file to save build Code.</li><li>Click “Configure”</li><li>Choose “Unix MakeFiles” and “Use default native compilers”, Click “Finish”</li><li>Search for “ With_QT” “With_OPENCL” , if you need Mp4 Video decode, remember “USE_FFMPEG”, but you have to install “ffmpeg” in step 1, if you need opencv_contrib, download it , and fill “OPENCV_EXTRA_MODULESPATH”</li><li>Click “Generate”</li></ol><p>and then, change Directory which your saved build code,</p><div class="highlighter-rouge"><pre class="highlight"><code>make
+make install
+</code></pre></div><ul><li>The Opencv3 lib will install at “/usr/local/lib”</li><li>C++ head file will install at /usr/local/include/opencv and opencv2</li><li>help Document will install at /usr/local/share/opencv</li><li>sample code will install at /usr/local/share/opencv</li></ul><ol><li>edit <code class="highlighter-rouge">opencv.conf</code>, add “/usr/local/lib” to <code class="highlighter-rouge">/etc/ld.so.conf.d/opencv.conf</code></li><li>add <code class="highlighter-rouge">PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig \ export PKG_CONFIG_PATH</code> to <code class="highlighter-rouge">/etc/bash.bashrc</code></li></ol><p>references: <a href="http://www.cnblogs.com/emouse/archive/2013/02/22/2922940.html">Linux 下编译安装OpenCV</a></p><h3 id="3-install-qt">3. Install QT</h3><p>Download from Qt Office site.</p><h3 id="4-focus-on-pro-file">4. Focus on .pro file</h3><p>New a “Qt Console Application”, and change the .pro to this:</p><div class="highlighter-rouge"><pre class="highlight"><code>QT += core
+QT -= gui
+
+CONFIG += c++11
+
+TARGET = "Your Project Name"
+CONFIG += console
+CONFIG -= app_bundle
+INCLUDEPATH += .
+INCLUDEPATH += /usr/local/include/
+
+LIBS += -L/usr/local/lib/ -I/usr/local/include -lopencv_core -lopencv_highgui -lopencv_imgproc -lopencv_aruco -lopencv_imgcodecs
+# [!!!] sometime you should add this LIBS path include.
+
+TEMPLATE = app
+
+SOURCES += main.cpp
+</code></pre></div><h3 id="5-test-it">5. Test it!</h3><p>your main.cpp</p><div class="highlighter-rouge"><pre class="highlight"><code>#include &lt;opencv2/core/core.hpp&gt;
+#include &lt;opencv2/imgproc/imgproc.hpp&gt;
+#include &lt;opencv2/highgui/highgui.hpp&gt;
+#include &lt;opencv2/aruco.hpp&gt;
+#include &lt;strstream&gt;
+using namespace cv;
+using namespace std;
+
+int main()
+{
+    Mat img=imread("pic.jpg");
+    imshow("show", img);
+    waitKey();
+    destroyAllWindows();
+}
+</code></pre></div></article><div class="page-navigation"> <a class="home" href="/" title="Back to Homepage">Home</a> <span> &middot; </span> <a class="prev" href="/notes/how-to-build-this-site.html" title="PREV: How to build this site">&gt;&gt;</a></div></main><div class="footer"> <span class="block">Made with &hearts; using <a href="http://jekyllrb.com/">Jekyll</a> &amp; <a href="https://github.com/heiswayi/the-plain" title="The Plain theme by Heiswayi Nrird">The Plain</a> &middot; &lt;/&gt; on <a href="https://github.com/nimohunter" title="Hosted on GitHub">GitHub</a></span> <span class="block">&copy; 2017 Nimo</span></div></body></html>
