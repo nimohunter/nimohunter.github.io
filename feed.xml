@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Nimo</title>
-    <description>The Plain is a Minimalist Jekyll theme that focuses on writing matters.</description>
-    <link></link>
+    <title>Nimo's Blog</title>
+    <description>Nimo's Blog</description>
+    <link>https://nimohunter.com</link>
     
       
         <item>
@@ -60,8 +60,8 @@
 &lt;p&gt;CSI 试图建立行业标准接口，将 Provision 以及 Kubernetes 的 Attach 和 Mount 功能全部抽离，形成单独的组件External Component (Driver Registrar, External Provisioner, External Attacher)。这部分都是K8S的部分，将具体实现扔出到CSI插件中去。&lt;/p&gt;
 </description>
           <pubDate>2019-08-12T00:00:00+08:00</pubDate>
-          <link>/notes/Understand-Kubernetes.html</link>
-          <guid isPermaLink="true">/notes/Understand-Kubernetes.html</guid>
+          <link>https://nimohunter.com/Understand-Kubernetes</link>
+          <guid isPermaLink="true">https://nimohunter.com/Understand-Kubernetes</guid>
         </item>
       
     
@@ -189,8 +189,8 @@ UNSAFE_END
 &lt;/ol&gt;
 </description>
           <pubDate>2018-06-01T00:00:00+08:00</pubDate>
-          <link>/notes/Talk-about-Violate-and-CAS.html</link>
-          <guid isPermaLink="true">/notes/Talk-about-Violate-and-CAS.html</guid>
+          <link>https://nimohunter.com/Talk-about-Violate-and-CAS</link>
+          <guid isPermaLink="true">https://nimohunter.com/Talk-about-Violate-and-CAS</guid>
         </item>
       
     
@@ -256,8 +256,8 @@ As you know, regist from one picture is not enough, because &lt;strong&gt;Aruco 
 
 </description>
           <pubDate>2017-06-06T00:00:00+08:00</pubDate>
-          <link>/notes/Real-time-pose-estimation-with-aruco.html</link>
-          <guid isPermaLink="true">/notes/Real-time-pose-estimation-with-aruco.html</guid>
+          <link>https://nimohunter.com/Real-time-pose-estimation-with-aruco</link>
+          <guid isPermaLink="true">https://nimohunter.com/Real-time-pose-estimation-with-aruco</guid>
         </item>
       
     
@@ -318,8 +318,8 @@ DEFINES += QT_DEPRECATED_WARNINGS
 &lt;p&gt;Of course, here is my Project in github : &lt;a href=&quot;https://github.com/nimohunter/Calibration-Use-ChArucoBoard&quot;&gt;here&lt;/a&gt;&lt;/p&gt;
 </description>
           <pubDate>2017-06-01T00:00:00+08:00</pubDate>
-          <link>/notes/Camera-Calibration-Use-ChArucoBoard.html</link>
-          <guid isPermaLink="true">/notes/Camera-Calibration-Use-ChArucoBoard.html</guid>
+          <link>https://nimohunter.com/Camera-Calibration-Use-ChArucoBoard</link>
+          <guid isPermaLink="true">https://nimohunter.com/Camera-Calibration-Use-ChArucoBoard</guid>
         </item>
       
     
@@ -398,8 +398,8 @@ ps. &lt;code class=&quot;highlighter-rouge&quot;&gt;23.106.151.177&lt;/code&gt; 
 &lt;p&gt;that’s TODO. Have to configure the shadowsocks and polipo, then use this.&lt;/p&gt;
 </description>
           <pubDate>2017-04-28T00:00:00+08:00</pubDate>
-          <link>/notes/Build-clean-DNS-Service.html</link>
-          <guid isPermaLink="true">/notes/Build-clean-DNS-Service.html</guid>
+          <link>https://nimohunter.com/Build-clean-DNS-Service</link>
+          <guid isPermaLink="true">https://nimohunter.com/Build-clean-DNS-Service</guid>
         </item>
       
     
@@ -434,8 +434,8 @@ protoc -I=$SRC_DIR --csharp_out=$DST_DIR $SRC_DIR/addressbook.proto
 
 </description>
           <pubDate>2017-04-14T00:00:00+08:00</pubDate>
-          <link>/notes/Unity-Java-Protobuf-3.0.html</link>
-          <guid isPermaLink="true">/notes/Unity-Java-Protobuf-3.0.html</guid>
+          <link>https://nimohunter.com/Unity-Java-Protobuf-3.0</link>
+          <guid isPermaLink="true">https://nimohunter.com/Unity-Java-Protobuf-3.0</guid>
         </item>
       
     
@@ -712,8 +712,8 @@ focal length.&lt;/li&gt;
 &lt;p&gt;&lt;img src=&quot;https://ws1.sinaimg.cn/large/bc1eaf88ly1fehfx5b2mtj20lq0emjxy.jpg&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
 </description>
           <pubDate>2017-03-21T00:00:00+08:00</pubDate>
-          <link>/notes/SolvePnP-5-Methods-in-Opencv3.html</link>
-          <guid isPermaLink="true">/notes/SolvePnP-5-Methods-in-Opencv3.html</guid>
+          <link>https://nimohunter.com/SolvePnP-5-Methods-in-Opencv3</link>
+          <guid isPermaLink="true">https://nimohunter.com/SolvePnP-5-Methods-in-Opencv3</guid>
         </item>
       
     
@@ -830,8 +830,8 @@ int main()
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 </description>
           <pubDate>2017-02-28T00:00:00+08:00</pubDate>
-          <link>/notes/Install-OpenCV3-QT-in-Debian.html</link>
-          <guid isPermaLink="true">/notes/Install-OpenCV3-QT-in-Debian.html</guid>
+          <link>https://nimohunter.com/Install-OpenCV3-QT-in-Debian</link>
+          <guid isPermaLink="true">https://nimohunter.com/Install-OpenCV3-QT-in-Debian</guid>
         </item>
       
     
@@ -1102,8 +1102,8 @@ ssh-copy-id -i ~/??Modify?/id_rsa.pub  user@yourdomain
 
 </description>
           <pubDate>2016-10-21T00:00:00+08:00</pubDate>
-          <link>/notes/how-to-build-this-site.html</link>
-          <guid isPermaLink="true">/notes/how-to-build-this-site.html</guid>
+          <link>https://nimohunter.com/how-to-build-this-site</link>
+          <guid isPermaLink="true">https://nimohunter.com/how-to-build-this-site</guid>
         </item>
       
     
@@ -1117,8 +1117,8 @@ ssh-copy-id -i ~/??Modify?/id_rsa.pub  user@yourdomain
 &lt;/blockquote&gt;
 </description>
           <pubDate>2015-09-09T00:00:00+08:00</pubDate>
-          <link>/notes/download-this-theme.html</link>
-          <guid isPermaLink="true">/notes/download-this-theme.html</guid>
+          <link>https://nimohunter.com/download-this-theme</link>
+          <guid isPermaLink="true">https://nimohunter.com/download-this-theme</guid>
         </item>
       
     

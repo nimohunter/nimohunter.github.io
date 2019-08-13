@@ -1,0 +1,23 @@
+<!DOCTYPE html> <html lang="en"> <head> <meta charset="utf-8"> <meta http-equiv="X-UA-Compatible" content="IE=edge"> <meta name="viewport" content="width=device-width, initial-scale=1" /> <title>Camera Calibration Use Charucoboard · Nimo's Blog</title> <meta name="description" content="The camera, which last use, imaging effect is not very good. So bought a new one, Which support 720p video with 30FPS and more, use this opportunity, talk ab..."> <link rel="icon" href="https://nimohunter.com/assets/favicon.png"> <link rel="apple-touch-icon" href="https://nimohunter.com/assets/touch-icon.png"> <link rel="stylesheet" href="https://nimohunter.com/assets/core.css"> <link rel="canonical" href="https://nimohunter.com/Camera-Calibration-Use-ChArucoBoard"> <link rel="alternate" type="application/atom+xml" title="Nimo's Blog" href="https://nimohunter.com/feed.xml" /> <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script> </head> <body> <aside class="logo"> <a href="https://nimohunter.com/"> <img src="https://avatars2.githubusercontent.com/u/5528309?v=4" alt="" class="logo-avatar"> </a> <span class="logo-prompt code">Back to Index</span> </aside> <div id="content"> <article> <div class="center"> <h1 class="title">Camera Calibration Use Charucoboard</h1> <time class="code">June 1, 2017</time> </div> <div class="divider"></div> <p>The camera, which last use, imaging effect is not very good. So bought a new one, Which support 720p video with 30FPS and more, use this opportunity, talk about use chArucoBoard to calibrate the camera.</p> <p>References:</p> <blockquote> <p><a href="http://docs.opencv.org/3.1.0/da/d13/tutorial_aruco_calibration.html">Calibration with ArUco and ChArUco</a></p> </blockquote> <h3 id="1-generate-charucoboard">1. Generate ChArucoBoard</h3> <p>From the reference, can get Source code from <a href="https://github.com/opencv/opencv_contrib/blob/master/modules/aruco/samples/create_board_charuco.cpp">here</a></p> <p>Because with Qt, the Qt Pro file is:</p> <div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>QT += core
+QT -= gui
+
+CONFIG += c++11
+
+TARGET = new_camera_Calibration
+CONFIG += console
+CONFIG -= app_bundle
+INCLUDEPATH += .
+INCLUDEPATH += /usr/local/include/
+
+LIBS += -L/usr/local/lib/ -I/usr/local/include -lopencv_core -lopencv_highgui -lopencv_imgproc -lopencv_aruco -lopencv_imgcodecs -lopencv_calib3d -lopencv_videoio
+
+TEMPLATE = app
+
+SOURCES += \
+    drawcharucoboard.cpp
+
+DEFINES += QT_DEPRECATED_WARNINGS
+
+</code></pre></div></div> <p>and with Qt Creator 4.2, in the left side, choose Project-&gt;Run Setting-&gt; Command line arguments, input this:</p> <div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>-w=7 -h=5 -sl=80 -ml=70 -d=11 -bb=1 -si=true /home/nimo/NewCamera/Temp/0601.png
+</code></pre></div></div> <p>Then, run the source code, you can get a Board.</p> <h3 id="2-calibrate">2. Calibrate</h3> <p>And then, you can use your camera to take a video, the content is the ChArucoBoard what is generate in first part.</p> <p>Use Python Code to Get avi, I dont know the reason why the Opencv3 could not recognize the video which I get from AMCap. And then, use the Source Code <a href="https://github.com/opencv/opencv_contrib/blob/master/modules/aruco/samples/calibrate_camera_charuco.cpp">here</a></p> <p>and here is the Args:</p> <div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>-w=7 -h=5 -sl=80 -ml=70 -d=11 -sc=true -v=/home/nimo/Videos/NewCamera/calibration.avi /home/nimo/NewCamera/Calibration.txt
+</code></pre></div></div> <p>Of course, here is my Project in github : <a href="https://github.com/nimohunter/Calibration-Use-ChArucoBoard">here</a></p> </article> <div class="page-navigation code"> <a class="next" href="https://nimohunter.com/Real-time-pose-estimation-with-aruco" title="NEXT: Real Time Pose Estimation With Aruco">&lt;&lt;</a> <span> &middot; </span> <a class="home" href="https://nimohunter.com/" title="Back to Index">Index</a> <span> &middot; </span> <a class="prev" href="https://nimohunter.com/Build-clean-DNS-Service" title="PREV: Build Clean Dns Service">&gt;&gt;</a> </div> </div> <div class="footer"> <span class="block">&copy; 2019 Nimo</span> <span class="block"><small>&lt;/&gt; Powered by <a href="https://jekyllrb.com/">Jekyll</a> and <a href="https://github.com/heiswayi/the-plain">The Plain theme</a>.</small></span> </div> </body> </html>
