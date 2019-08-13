@@ -1,43 +1,997 @@
---- layout: null ---
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Nimo</title>
+    <description>The Plain is a Minimalist Jekyll theme that focuses on writing matters.</description>
+    <link></link>
+    
+      
+        <item>
+          <title>Understand Kubernetes</title>
+          <description>&lt;blockquote&gt;
+  &lt;p&gt;这是一篇不那么正经的Kubernetes讲解，并不对实际的API进行讲解，只描述其Kubernetes的基本特点和核心功能。&lt;/p&gt;
+&lt;/blockquote&gt;
 
-<?xml version="1.0" encoding="utf-8" ?>
-<feed xmlns="http://www.w3.org/2005/Atom">
+&lt;p&gt;Kubernetes 是在CNCF (Cloud Native Computing Foundation) 牵头，由社区完善的大规模容器编排处理平台。根据近几年的发展，基本上成为了容器编排平台的标准地位。从大多数软件开发者的角度来说，Kubernetes解决的事代码 push commit 之后的所有事项，从 CI/CD，到发布运维，到升级回滚。&lt;/p&gt;
 
-  <title>{{ site.title | xml_escape }}</title>
-  <subtitle>{{ site.description | xml_escape }}</subtitle>
-  <link href="{{ site.baseurl }}/" rel="alternate"/>
-  <link href="{{ site.baseurl | append: /feed.xml }}" rel="self"/>
-  <rights>Copyright @
-    {{ site.time | date: '%Y' }},
-    {{ site.author_name | xml_escape }}</rights>
-  <icon>{{ site.baseurl }}/assets/favicon.png</icon>
+&lt;h2 id=&quot;kubernetes-特点&quot;&gt;Kubernetes 特点&lt;/h2&gt;
 
-  <author>
-    <name>{{ site.author_name | xml_escape }}</name>
-    <email>{{ site.author_email | xml_escape }}</email>
-    <uri>https://twitter.com/{{ site.twitter_username }}</uri>
-  </author>
+&lt;p&gt;个人认为 Kubernetes 主要设计特点在于对用户十分友好的声明式API以及实现声明式API的控制器，其次是容器编排能力与足够开放的CRI, CSI, CNI。&lt;/p&gt;
 
-  <updated>{{ site.time | date_to_xmlschema }}</updated>
-  <id>{{ site.baseurl }}/</id>
-  <generator version="{{ jekyll.version }}">Jekyll</generator>
+&lt;h3 id=&quot;声明式api以及控制器&quot;&gt;声明式API以及控制器&lt;/h3&gt;
 
-  {% for post in site.posts limit:40 %}
+&lt;p&gt;声明式API相对应的是命令式API。Kubernetes做到了所声明即所得，意味着用户利用yaml文件声明的某种API的描述，kubernetes能够时刻保证现状和用户声明的一致，如果发生变化，kubernetes将试图进行一系列自动的操作来维持一致性。所以Kubernetes的高层API是相对抽象的，更多的从业务出发，更多的使用户的操作更直观和简单。&lt;/p&gt;
 
-  {% assign content = post.content | replace: "&#8617;", "&#8617;&#xfe0e;" %}
-  {% assign content = content | replace: "data-lang", "lang" %}
-  {% assign content = content | replace: "<mark>", "<b>" | replace: "</mark>", "</b>" %}
+&lt;p&gt;为了维持这种声明式的结果就需要不断地检查自身的现状，这就是调协(Reconcile)，就是控制器主要功能，用来保证声明的结果实时是正确的。&lt;/p&gt;
 
-  <entry>
-    <title type="html">{{ post.title | xml_escape }}</title>
-    <id>{{ post.url | prepend: site.baseurl }}</id>
-    <updated>{{ post.updated | date_to_xmlschema }}</updated>
-    <published>{{ post.path | truncate: 20 | replace: "...", "" | replace: "_posts/", "" }}T10:00:00+02:00</published>
-    <content type="html" xml:lang="en">
-      <![CDATA[{{ content }}]]>
-    </content>
-  </entry>
+&lt;p&gt;而基于Kubernetes的开发基本就围绕在 Custom Resource Define 与 Custom Controller. 建设更高层的API，满足业务需求。&lt;/p&gt;
 
-  {% endfor %}
+&lt;h3 id=&quot;容器编排&quot;&gt;容器编排&lt;/h3&gt;
+&lt;p&gt;容器编排是Kubernetes的核心能力，将不同的Pod放在合适的Node上，并在需要的时候进行腾挪。这里正在进行重构，目前的 Default Scheduler 可能并不能满足复杂的业务发展和需求。&lt;/p&gt;
 
-</feed>
+&lt;p&gt;默认调度器有两个控制循环。一个是Informer Path，用来监听Etcd中Pod，Node，Service等与调度相关的API的变化，并将待调度的事件放入Priority Queue中。另一个是 Scheduling Path。从Priority Queue取出相关事件，例如
+新建Pod。经过Predicate来检查过滤Node，然后在符合条件的Node中进行Priority操作进行打分，分数最高的Node接收该Pod。&lt;/p&gt;
+
+&lt;h3 id=&quot;cnicontainer-network-interface&quot;&gt;CNI(Container Network Interface)&lt;/h3&gt;
+&lt;p&gt;Kubernetes默认所有的容器都是三层联通的。但是在实际中，如果不做操作，宿主机的容器只能和其他的宿主机通信，无法跟其他宿主机的容器进行通信。&lt;/p&gt;
+
+&lt;p&gt;Kubernetes并不解决跨容器通信问题，只是通过CNI插件来完成这个问题。最常见的有两种实现方式：&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;Calico 将容器的ip通过BGP来维护一个路由表，让所有跨主机通信知道某个容器的ip应该送往哪个宿主机。二层不通的情况下使用IPIP封装。&lt;/li&gt;
+  &lt;li&gt;Flannel + VxLan 通过二次封包和隧道进行通信，同样也需要容器ip和宿主机ip关系。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;其中容器ip和宿主机ip关系存储在Etcd中，Etcd另一个存储就是Pod Node 等API的数据。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h3 id=&quot;cricontainer-runtime-interface&quot;&gt;CRI(Container Runtime Interface)&lt;/h3&gt;
+&lt;p&gt;Kubernetes 最初的底层容器使用的是docker，但是因为CoreOs公司的rkt容器等历史原因,Kubernetes将对容器的操作抽象出来，不再对docker进行直接操作。保证下层无论是哪种容器化技术，kubernetes都能够通过CRI进行操作。&lt;/p&gt;
+
+&lt;p&gt;例如 kata Container 与 gVisor等。&lt;/p&gt;
+
+&lt;h3 id=&quot;csicontainner-storage-interface&quot;&gt;CSI(Containner Storage Interface)&lt;/h3&gt;
+&lt;p&gt;Kubernetes 本身有 in-tree 的调用存储服务的方式，但是这种方式需要存储提供者将代码并入Kubernetes的代码中，随着版本同时发布，这种和Kubernetes耦合的方式是不合理的。
+所以Kubernetes提供了两种Storage Plugin，FlexVolume 和 CSI。&lt;/p&gt;
+
+&lt;p&gt;FlexVolume 简单的将 mount attach 等功能相应做成 executable file 放入K8S中，提供了简单的自定义能力，由宿主机调用从而进行 attach 和 mount，provision 功能依然不支持。这种方式局限性比较大，首先是需要在宿主机安装一些必要的辅助插件，其次是FlxeVolume的每一次对插件可执行文件的调用都是一次独立调用，没有ctx。&lt;/p&gt;
+
+&lt;p&gt;CSI 试图建立行业标准接口，将 Provision 以及 Kubernetes 的 Attach 和 Mount 功能全部抽离，形成单独的组件External Component (Driver Registrar, External Provisioner, External Attacher)。这部分都是K8S的部分，将具体实现扔出到CSI插件中去。&lt;/p&gt;
+</description>
+          <pubDate>2019-08-12T00:00:00+08:00</pubDate>
+          <link>/notes/Understand-Kubernetes.html</link>
+          <guid isPermaLink="true">/notes/Understand-Kubernetes.html</guid>
+        </item>
+      
+    
+      
+        <item>
+          <title>Real Time Pose Estimation With Aruco</title>
+          <description>&lt;blockquote&gt;
+  &lt;p&gt;Project in  &lt;a href=&quot;https://github.com/nimohunter/Real_Time_pose_estimation_with_aruco&quot;&gt;github&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;This projects base on &lt;a href=&quot;http://docs.opencv.org/3.1.0/dc/d2c/tutorial_real_time_pose.html&quot;&gt;Real Time pose estimation of a textured object&lt;/a&gt; and here is &lt;a href=&quot;https://github.com/opencv/opencv/tree/master/samples/cpp/tutorial_code/calib3d/real_time_pose_estimation&quot;&gt;Code&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;if you cannot run this offical code, maybe you can use this, &lt;a href=&quot;https://github.com/nimohunter/Opencv_Aruco/tree/master/Project_Real_Time_pose_estimation_of_a_textured_object&quot;&gt;My base Real time estimate prject&lt;/a&gt;, which just modify a little to make the offical code can build and run successful. (maybe the offical code is old and cannot run…)&lt;/p&gt;
+
+&lt;p&gt;Request:&lt;/p&gt;
+&lt;ol&gt;
+  &lt;li&gt;Opencv3 with opencv_contrib(this extra-package include aruco)&lt;/li&gt;
+  &lt;li&gt;Qt Creator&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;hr /&gt;
+&lt;p&gt;As the name - “Real time pose estimation with aruco”, I use the Opecv3 method &lt;code class=&quot;highlighter-rouge&quot;&gt;SovlvePnp&lt;/code&gt; to Solve this problem, you can see the final result at &lt;a href=&quot;https://youtube_address&quot;&gt;TODO&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;“With Aruco” meanings abandon the function that use ORB to get image keypoint, i don’t think the ORB method is unable to find out keypoints, the fatal reason that i abandon ORB method is the time cost. ORB method maybe cost time twice as fast as Aruco. but you can see ORB can get more keypoints, this is the contradiction.&lt;/p&gt;
+
+&lt;h2 id=&quot;component&quot;&gt;Component&lt;/h2&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;RealTimePoseEstimation_WithAurcoDetect    -&amp;gt; Main Qt Project&lt;/li&gt;
+  &lt;li&gt;RealTimePoseEstimation_WithAurcoDetect_Data   -&amp;gt; Data Use&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
+&lt;p&gt;Before read, recommand you read the Opencv3 offical project &lt;a href=&quot;http://docs.opencv.org/3.1.0/dc/d2c/tutorial_real_time_pose.html&quot;&gt;Real Time pose estimation of a textured object&lt;/a&gt; and here is &lt;a href=&quot;https://github.com/opencv/opencv/tree/master/samples/cpp/tutorial_code/calib3d/real_time_pose_estimation&quot;&gt;Code&lt;/a&gt;&lt;/p&gt;
+
+&lt;h3 id=&quot;registration--main_registrationcpp&quot;&gt;registration ( &lt;code class=&quot;highlighter-rouge&quot;&gt;main_registration.cpp&lt;/code&gt;)&lt;/h3&gt;
+&lt;p&gt;the offical idea is build a connection between ORB keypoint and it’s 3d Postion in world coordinate. Use this connection, the video frame can use ORB detect to get keypoint, thus obtained it’s &lt;strong&gt;3d Postion in world coordinate&lt;/strong&gt;, with the &lt;strong&gt;2d position in Camera coordinate&lt;/strong&gt;, finally use &lt;code class=&quot;highlighter-rouge&quot;&gt;SolvePnP&lt;/code&gt; method to get the object position estimate.&lt;/p&gt;
+
+&lt;p&gt;we replace the ORB keypoint with The four vertices of the Aruco matrix. Use Aurco detect can get the Aruco maker very quickly, so how can we get the connections between vertices of aruco matrix with its’ 3d point in world coordinate?&lt;/p&gt;
+
+&lt;p&gt;The offcial code give us a solution to deal with it. At the begining of registration, we need the user to point the 8 vertices of this Cube, so we can get the &lt;strong&gt;vertices 2d position in camera coordinate&lt;/strong&gt;, and we fill the &lt;strong&gt;vertices 3d Postion in world coordinate&lt;/strong&gt; in &lt;code class=&quot;highlighter-rouge&quot;&gt;box.ply&lt;/code&gt;. So, we can use these data to caculate the cube’s position and rotaion with &lt;code class=&quot;highlighter-rouge&quot;&gt;SolvePnp&lt;/code&gt;. Thus we can use the result to project four vertices of the Aruco matrix which is &lt;strong&gt;2d position in camera coordinate&lt;/strong&gt; to &lt;strong&gt;3d Postion in world coordinate&lt;/strong&gt; (&lt;code class=&quot;highlighter-rouge&quot;&gt;pnp_registration.backproject2DPoint(&amp;amp;mesh, point2d, point3d)&lt;/code&gt;), so i get the connections, save it to &lt;code class=&quot;highlighter-rouge&quot;&gt;cookies_ORB.yml&lt;/code&gt;&lt;/p&gt;
+
+&lt;h3 id=&quot;merge-the-regist-file-main_mergecpp&quot;&gt;merge the regist file (&lt;code class=&quot;highlighter-rouge&quot;&gt;main_merge.cpp&lt;/code&gt;)&lt;/h3&gt;
+&lt;p&gt;Update at 2017.06.07
+As you know, regist from one picture is not enough, because &lt;strong&gt;Aruco cannot detect all marker in this cube&lt;/strong&gt;, we have to combine the regist result from multi-picture.&lt;/p&gt;
+
+&lt;p&gt;In this project, I regist 5 pictures manually, get 5 regist yml file. &lt;code class=&quot;highlighter-rouge&quot;&gt;cookies_Aruco_registrate_1.yml&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;cookies_Aruco_registrate_2.yml&lt;/code&gt; … And then use &lt;code class=&quot;highlighter-rouge&quot;&gt;main_merge.cpp&lt;/code&gt;. So The vertices of each aruco marker square have multiple measurements, calculate the sum of the distances of each measurement coordinate to the other measured coordinates, then deleting the measurement coordinates with too much deviation.&lt;/p&gt;
+
+&lt;p&gt;finally get the average aruco matrix’s &lt;strong&gt;3d point in world coordinate&lt;/strong&gt;.&lt;/p&gt;
+
+&lt;h3 id=&quot;detection-in-video-main_detectioncpp&quot;&gt;detection in video (&lt;code class=&quot;highlighter-rouge&quot;&gt;main_detection.cpp&lt;/code&gt;)&lt;/h3&gt;
+&lt;p&gt;continue with above,we have got the connections between vertices of aruco matrix with its’ &lt;strong&gt;3d point in world coordinate&lt;/strong&gt;.&lt;/p&gt;
+
+&lt;p&gt;next is simple, detect the video per frame, get the four vertices of the Aruco matrix(meanings get the point’s &lt;strong&gt;2d position in camera coordinate&lt;/strong&gt;), find the map(Store the connection which introduced above), get the &lt;strong&gt;3d Postion in world coordinate&lt;/strong&gt;, then, &lt;code class=&quot;highlighter-rouge&quot;&gt;SolvePnp&lt;/code&gt; it!&lt;/p&gt;
+
+&lt;p&gt;ps.The stability of this method is heavily dependent on kalman filter, but I donnot know too much about kalman, so I ignored it.&lt;/p&gt;
+
+&lt;h2 id=&quot;show-it&quot;&gt;Show it&lt;/h2&gt;
+&lt;p&gt;&lt;img src=&quot;https://ws1.sinaimg.cn/mw690/bc1eaf88ly1fgcnhrgep8j20dp08njud.jpg&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Here is gif :
+&lt;a href=&quot;https://ws1.sinaimg.cn/mw690/bc1eaf88ly1fgcnc15zyig20ds08qe8b.gif&quot;&gt;gif-address&lt;/a&gt;&lt;/p&gt;
+
+</description>
+          <pubDate>2017-06-06T00:00:00+08:00</pubDate>
+          <link>/notes/Real-time-pose-estimation-with-aruco.html</link>
+          <guid isPermaLink="true">/notes/Real-time-pose-estimation-with-aruco.html</guid>
+        </item>
+      
+    
+      
+        <item>
+          <title>Camera Calibration Use Charucoboard</title>
+          <description>&lt;p&gt;The camera, which last use, imaging effect is not very good. So bought a new one, Which support 720p video with 30FPS and more, use this opportunity, talk about use chArucoBoard to calibrate the camera.&lt;/p&gt;
+
+&lt;p&gt;References:&lt;/p&gt;
+&lt;blockquote&gt;
+  &lt;p&gt;&lt;a href=&quot;http://docs.opencv.org/3.1.0/da/d13/tutorial_aruco_calibration.html&quot;&gt;Calibration with ArUco and ChArUco&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h3 id=&quot;1-generate-charucoboard&quot;&gt;1. Generate ChArucoBoard&lt;/h3&gt;
+&lt;p&gt;From the reference, can get Source code from &lt;a href=&quot;https://github.com/opencv/opencv_contrib/blob/master/modules/aruco/samples/create_board_charuco.cpp&quot;&gt;here&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;Because with Qt, the Qt Pro file is:&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;QT += core
+QT -= gui
+
+CONFIG += c++11
+
+TARGET = new_camera_Calibration
+CONFIG += console
+CONFIG -= app_bundle
+INCLUDEPATH += .
+INCLUDEPATH += /usr/local/include/
+
+LIBS += -L/usr/local/lib/ -I/usr/local/include -lopencv_core -lopencv_highgui -lopencv_imgproc -lopencv_aruco -lopencv_imgcodecs -lopencv_calib3d -lopencv_videoio
+
+TEMPLATE = app
+
+SOURCES += \
+    drawcharucoboard.cpp
+
+DEFINES += QT_DEPRECATED_WARNINGS
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;and with Qt Creator 4.2, in the left side, choose Project-&amp;gt;Run Setting-&amp;gt; Command line arguments, input this:&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;-w=7 -h=5 -sl=80 -ml=70 -d=11 -bb=1 -si=true /home/nimo/NewCamera/Temp/0601.png
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Then, run the source code, you can get a Board.&lt;/p&gt;
+
+&lt;h3 id=&quot;2-calibrate&quot;&gt;2. Calibrate&lt;/h3&gt;
+&lt;p&gt;And then, you can use your camera to take a video, the content is the ChArucoBoard what is generate in first part.&lt;/p&gt;
+
+&lt;p&gt;Use Python Code to Get avi, I dont know the reason why the Opencv3 could not recognize the video which I get from AMCap. And then, use the Source Code &lt;a href=&quot;https://github.com/opencv/opencv_contrib/blob/master/modules/aruco/samples/calibrate_camera_charuco.cpp&quot;&gt;here&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;and here is the Args:&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;-w=7 -h=5 -sl=80 -ml=70 -d=11 -sc=true -v=/home/nimo/Videos/NewCamera/calibration.avi /home/nimo/NewCamera/Calibration.txt
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Of course, here is my Project in github : &lt;a href=&quot;https://github.com/nimohunter/Calibration-Use-ChArucoBoard&quot;&gt;here&lt;/a&gt;&lt;/p&gt;
+</description>
+          <pubDate>2017-06-01T00:00:00+08:00</pubDate>
+          <link>/notes/Camera-Calibration-Use-ChArucoBoard.html</link>
+          <guid isPermaLink="true">/notes/Camera-Calibration-Use-ChArucoBoard.html</guid>
+        </item>
+      
+    
+      
+        <item>
+          <title>Build Clean Dns Service</title>
+          <description>&lt;p&gt;As we know, every visit to google.com, the browser have to ask DNS server to get DNS infomation about google.com, but for some well-known reason, especially in China mainland, you will get a fake infomation. More seriouly, the ISP(Internet Service Provider)such as China Unicom or China Mobie, dirty the DNS, release ad in DNS infomarion.&lt;/p&gt;
+
+&lt;p&gt;So, we need a clean DNS service. unfortunately, the Google Public DNS : 8.8.8.8 , it’s performance in China mainaland is unstable, but we have another method.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://developers.google.com/speed/public-dns/docs/dns-over-https&quot;&gt;DNS-over-HTTPS&lt;/a&gt; Which can use Https get DNS information.&lt;/p&gt;
+
+&lt;p&gt;Next, use the docker to configure it.&lt;/p&gt;
+
+&lt;hr /&gt;
+&lt;h3 id=&quot;1-pdnsd&quot;&gt;1. Pdnsd&lt;/h3&gt;
+&lt;p&gt;We need this tools to cache DNS info,  docker image: &lt;a href=&quot;https://hub.docker.com/r/vimagick/pdnsd/&quot;&gt;vimagick/pdnsd&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;useage:&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;docker run --name mypdnsd -p 53:53/tcp -p 53:53/udp -d vimagick/pdnsd
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;then, docker-enter this, and edit &lt;code class=&quot;highlighter-rouge&quot;&gt;/etc/pdnsd.conf&lt;/code&gt;&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;global {
+        perm_cache=2048;
+        cache_dir=&quot;/var/cache/pdnsd&quot;;
+        run_as=&quot;pdnsd&quot;;
+        server_ip = any;
+        status_ctl = on;
+#       paranoid=on;       # This option reduces the chance of cache poisoning
+                           # but may make pdnsd less efficient, unfortunately.
+        min_ttl=15m;       # Retain cached entries at least 15 minutes.
+        max_ttl=1w;        # One week.
+        timeout=10;        # Global timeout option (10 seconds).
+        neg_domain_pol=on;
+        query_method=tcp_only;
+
+}
+
+server {
+        label = &quot;prcdns&quot;;
+        ip = 23.106.151.177;
+        timeout = 10;
+        port = 3535;
+}
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;focus on &lt;code class=&quot;highlighter-rouge&quot;&gt;server {}&lt;/code&gt; which is the transform,&lt;/p&gt;
+
+&lt;p&gt;in general, you can use this:&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;server {
+	label = &quot;114dns&quot;; 
+	ip = 114.114.114.114,114.114.115.115;
+	timeout = 10;
+	port = 53; 
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;but in our method, we have to build a DNS server. 
+ps. &lt;code class=&quot;highlighter-rouge&quot;&gt;23.106.151.177&lt;/code&gt; is a test service.&lt;/p&gt;
+
+&lt;h3 id=&quot;2-use-dns-over-https&quot;&gt;2. Use DNS-over-HTTPS.&lt;/h3&gt;
+&lt;p&gt;docker image: &lt;a href=&quot;https://github.com/lbp0200/PRCDNS&quot;&gt;lbp0200/PRCDNS&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;docker-enter this, see /run.sh&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;PRCDNS -l $HOST -p $PORT -r http_proxy
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Because the DNS-over-Https website has been block, so you have to Shadowsocks to Http with polipo.&lt;/p&gt;
+
+&lt;p&gt;that’s TODO. Have to configure the shadowsocks and polipo, then use this.&lt;/p&gt;
+</description>
+          <pubDate>2017-04-28T00:00:00+08:00</pubDate>
+          <link>/notes/Build-clean-DNS-Service.html</link>
+          <guid isPermaLink="true">/notes/Build-clean-DNS-Service.html</guid>
+        </item>
+      
+    
+      
+        <item>
+          <title>Unity Java Protobuf 3.0</title>
+          <description>&lt;h3 id=&quot;referece&quot;&gt;Referece&lt;/h3&gt;
+&lt;ol&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/GongFaxin/protobuf_for_unity&quot;&gt;protobuf_for_unity&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://developers.google.com/protocol-buffers/docs/javatutorial&quot;&gt;Google Protobuf&lt;/a&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;hr /&gt;
+
+&lt;h3 id=&quot;unity&quot;&gt;Unity&lt;/h3&gt;
+&lt;p&gt;Thanks for &lt;a href=&quot;https://github.com/GongFaxin&quot;&gt;GongFaxin&lt;/a&gt;, You can download his Code &lt;a href=&quot;https://github.com/GongFaxin/protobuf_for_unity&quot;&gt;protobuf_for_unity&lt;/a&gt;, and Run in Unity 5.3, you can see a lot of Protobuf source code.&lt;/p&gt;
+
+&lt;h3 id=&quot;protobuf&quot;&gt;Protobuf&lt;/h3&gt;
+&lt;p&gt;Download the tools in &lt;a href=&quot;https://github.com/google/protobuf/releases/tag/v3.0.0&quot;&gt;Protocol Buffers v3.0.0 Download link&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;Then, follow the Google Tutorial.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;protoc -I=$SRC_DIR --java_out=$DST_DIR $SRC_DIR/addressbook.proto
+protoc -I=$SRC_DIR --csharp_out=$DST_DIR $SRC_DIR/addressbook.proto
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Then you can get the Java code or C# code.&lt;/p&gt;
+
+&lt;h3 id=&quot;java&quot;&gt;Java&lt;/h3&gt;
+&lt;p&gt;you will need the Jar: &lt;a href=&quot;https://repo1.maven.org/maven2/com/google/protobuf/protobuf-java/3.0.0/protobuf-java-3.0.0.jar&quot;&gt;protobuf-java-3.0.0.jar&lt;/a&gt;&lt;/p&gt;
+
+</description>
+          <pubDate>2017-04-14T00:00:00+08:00</pubDate>
+          <link>/notes/Unity-Java-Protobuf-3.0.html</link>
+          <guid isPermaLink="true">/notes/Unity-Java-Protobuf-3.0.html</guid>
+        </item>
+      
+    
+      
+        <item>
+          <title>Solvepnp 5 Methods In Opencv3</title>
+          <description>&lt;h4 id=&quot;before-begin&quot;&gt;Before Begin&lt;/h4&gt;
+&lt;p&gt;SolvePnP , Finds an object pose from 3D-2D point correspondences., which is the method that rebuild 3D position from 2D picture.&lt;/p&gt;
+
+&lt;p&gt;We DO NOT Care about the how to use SolvePnP, we try to understand the inner meaning of SolvePnP, and the 5 methods.&lt;/p&gt;
+
+&lt;h4 id=&quot;solvepnp-methods-and-paper-table&quot;&gt;SolvePnP Methods and Paper table:&lt;/h4&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th style=&quot;text-align: center&quot;&gt;SolvePnP Methods&lt;/th&gt;
+      &lt;th style=&quot;text-align: center&quot;&gt;Reference Paper&lt;/th&gt;
+      &lt;th style=&quot;text-align: center&quot;&gt;year&lt;/th&gt;
+      &lt;th style=&quot;text-align: center&quot;&gt; &lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;SOLVEPNP_ITERATIVE&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;Original based on Levenberg-Marquardt optimization&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt; &lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt; &lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;SOLVEPNP_EPNP&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;EPnP: Efficient Perspective-n-Point Camera Pose Estimation&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;2008&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt; &lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;SOLVEPNP_P3P&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;Complete Solution Classification for the Perspective-Three-Point Problem&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;2003&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt; &lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;SOLVEPNP_DLS&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;A Direct Least-Squares (DLS) Method for PnP&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;2011&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt; &lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;SOLVEPNP_UPNP&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;Exhaustive Linearization for Robust Camera Pose and Focal Length Estimation&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;2013&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt; &lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;Methods for solving a PnP problem:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;&lt;strong&gt;SOLVEPNP_ITERATIVE&lt;/strong&gt; Iterative method is based on Levenberg-Marquardt optimization. In
+this case the function finds such a pose that minimizes reprojection error, that is the sum
+of squared distances between the observed projections imagePoints and the projected (using
+projectPoints ) objectPoints .&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;SOLVEPNP_P3P&lt;/strong&gt; Method is based on the paper of X.S. Gao, X.-R. Hou, J. Tang, H.-F. Chang
+“Complete Solution Classification for the Perspective-Three-Point Problem”. In this case the
+function requires exactly four object and image points.&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;SOLVEPNP_EPNP&lt;/strong&gt; Method has been introduced by F.Moreno-Noguer, V.Lepetit and P.Fua in the paper “EPnP: Efficient Perspective-n-Point Camera Pose Estimation”.&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;SOLVEPNP_DLS&lt;/strong&gt; Method is based on the paper of Joel A. Hesch and Stergios I. Roumeliotis.
+“A Direct Least-Squares (DLS) Method for PnP”.&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;SOLVEPNP_UPNP&lt;/strong&gt; Method is based on the paper of A.Penate-Sanchez, J.Andrade-Cetto,
+F.Moreno-Noguer. “Exhaustive Linearization for Robust Camera Pose and Focal Length
+Estimation”. In this case the function also estimates the parameters \f$f_x\f$ and \f$f_y\f$
+assuming that both have the same value. Then the cameraMatrix is updated with the estimated
+focal length.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;hr /&gt;
+
+&lt;h3 id=&quot;1-solvepnp_iterative&quot;&gt;1. SOLVEPNP_ITERATIVE&lt;/h3&gt;
+&lt;p&gt;Accroding to &lt;code class=&quot;highlighter-rouge&quot;&gt;solvepnp.cpp&lt;/code&gt;:&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;else if (flags == SOLVEPNP_ITERATIVE)
+{
+    CvMat c_objectPoints = opoints, c_imagePoints = ipoints;
+    CvMat c_cameraMatrix = cameraMatrix, c_distCoeffs = distCoeffs;
+    CvMat c_rvec = rvec, c_tvec = tvec;
+    cvFindExtrinsicCameraParams2(&amp;amp;c_objectPoints, &amp;amp;c_imagePoints, &amp;amp;c_cameraMatrix,
+                                 c_distCoeffs.rows*c_distCoeffs.cols ? &amp;amp;c_distCoeffs : 0,
+                                 &amp;amp;c_rvec, &amp;amp;c_tvec, useExtrinsicGuess );
+    result = true;
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;Which meanings this Method use the function &lt;code class=&quot;highlighter-rouge&quot;&gt;cvFindExtrinsicCameraParams2&lt;/code&gt; in &lt;code class=&quot;highlighter-rouge&quot;&gt;calibration.cpp&lt;/code&gt;.&lt;/p&gt;
+
+&lt;h4 id=&quot;about-cvfindextrinsiccameraparams2&quot;&gt;About cvFindExtrinsicCameraParams2&lt;/h4&gt;
+
+&lt;p&gt;In this moment, should reference &lt;a href=&quot;http://docs.opencv.org/3.1.0/d9/d0c/group__calib3d.html&quot;&gt;offical calib3d&lt;/a&gt;. In Detailed Desciption, focus on the perspective transformation.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://www.opencv.org.cn/opencvdoc/2.3.2/html/_images/math/50a3464c85a412907d91fd8895108ff692eb8d08.png&quot; alt=&quot;original-photo&quot; /&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;(X, Y, Z) are the coordinates of a 3D point in the world coordinate space&lt;/li&gt;
+  &lt;li&gt;(R t) is the Camera’s Rotation and Position, which is what we need to know&lt;/li&gt;
+  &lt;li&gt;fx, fy, cx, cy is the Camera’s intrinsic&lt;/li&gt;
+  &lt;li&gt;s is Focal length&lt;/li&gt;
+  &lt;li&gt;u v are the coordinates of the projection point in pixels(picture)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;or can use this table:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://docs.opencv.org/2.4/_images/math/f51a5ba02487486308c29bef720f3186d18abac6.png&quot; alt=&quot;other-photo&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;In &lt;code class=&quot;highlighter-rouge&quot;&gt;cvFindExtrinsicCameraParams2&lt;/code&gt;, you can get Camera extrinsic from intrinsic, camera intrinsic matrix and distortion coefficients.&lt;/p&gt;
+
+&lt;p&gt;Camera extrinsic is Camera’s Postion and Rotation, in the other word, if the Camera is static, then can get the Object’s Position and Rotation, but the output is reversed.&lt;/p&gt;
+
+&lt;h4 id=&quot;how-to-calc-cvfindextrinsiccameraparams2&quot;&gt;How to Calc cvFindExtrinsicCameraParams2&lt;/h4&gt;
+
+&lt;p&gt;Back to &lt;code class=&quot;highlighter-rouge&quot;&gt;cvFindExtrinsicCameraParams2&lt;/code&gt;, this function use DLT(Direct Linear Transform)  algorithm solve it, and refine extrinsic parameters using Levenberg-Marquardt algorithm.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://rosclub.cn/data/attachment/portal/201612/01/230812wss38nmn2qs08k1f.jpg&quot; alt=&quot;DLT&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Then, use Gaussion-Newton minimize the reprojection error.&lt;/p&gt;
+
+&lt;h3 id=&quot;2-solvepnp_p3p&quot;&gt;2. SOLVEPNP_P3P&lt;/h3&gt;
+&lt;p&gt;First, we have to know, the P, A, B, C must be Non-coplanar.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://ws1.sinaimg.cn/large/bc1eaf88ly1febvzy7u9sj20m70ez4cc.jpg&quot; alt=&quot;P3P_1&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;use the law of cosines, we can know:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://latex.codecogs.com/png.latex?%5Cinline%20%5Cbegin%7Balign*%7DY%5E2&amp;plus;Z%5E2-2YZ%5Ccos%5Calpha%3D%7Ba%7D%27%5E2%5C%5CX%5E2&amp;plus;Z%5E2-2XZ%5Ccos%5Cbeta%3D%7Bb%7D%27%5E2%5C%5CX%5E2&amp;plus;Y%5E2-2XY%5Ccos%5Cgamma%3D%7Bc%7D%27%5E2%5C%5C%5Cend%7Balign*%7D&quot; alt=&quot;\begin{align*}Y^2+Z^2-2YZ\cos\alpha={a}'^2\X^2+Z^2-2XZ\cos\beta={b}'^2\X^2+Y^2-2XY\cos\gamma={c}'^2\\end{align*}&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://ws1.sinaimg.cn/large/bc1eaf88ly1febwi6tc88j20m60f4dth.jpg&quot; alt=&quot;P3P_2&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Final, Fomulation(13), x can get 4 possible answer. So, use the 4th point to determind the best answer.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://ws1.sinaimg.cn/large/bc1eaf88ly1febwsm7vpjj20m60eh49u.jpg&quot; alt=&quot;P3P_3&quot; /&gt;&lt;/p&gt;
+
+&lt;h3 id=&quot;3-solvepnp_epnp&quot;&gt;3. SOLVEPNP_EPNP&lt;/h3&gt;
+&lt;p&gt;Reference:&lt;/p&gt;
+&lt;ol&gt;
+  &lt;li&gt;&lt;a href=&quot;http://www.voidcn.com/blog/zhyh1435589631/article/p-6512659.html&quot;&gt;关于使用SVD分解方法求解AX=0方程的一点说明&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;http://course.shufe.edu.cn/jpkc/jcjx/gdds/exs/ex11.pdf&quot;&gt;Document of classbook&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;http://rosclub.cn/post-566.html&quot;&gt;PnP算法简介与代码解析-柴政&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;http://www.cnblogs.com/jian-li/p/5689122.html&quot;&gt;SolvePnp Algorithm(Chinese Version)&lt;/a&gt; and Paper.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;Key Word: SVD(Singular Value Decomposition)&lt;/p&gt;
+
+&lt;h4 id=&quot;31-mx--0&quot;&gt;3.1 Mx = 0&lt;/h4&gt;
+&lt;p&gt;First, you should understand that every point can be present by four base point in 3D space. In theory, the control points(four base points) can be chosen arbitrarily, However, in practice, found that the stability of the paper’s method is increased by taking the centroid of the reference points as one, and to select the rest in such a way that they form a basis aligned with the principal directions.&lt;/p&gt;
+
+&lt;p&gt;First, look at this basic fomulation: P^w meaning points in world coordinate, meanwhile P^c meaning points in camera coordinate. P^c is what we determind first, so every point can be present by four base point.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://latex.codecogs.com/gif.latex?p_i^w=\sum_{j=1}^4\alpha_{ij}c_j^w,&amp;space;\quad&amp;space;with&amp;space;\sum_{j=1}^4\alpha_{ij}=1&quot; alt=&quot;p_i^w=\sum_{j=1}^4\alpha_{ij}c_j^w, \quad with \sum_{j=1}^4\alpha_{ij}=1&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://latex.codecogs.com/gif.latex?p_i^c=\sum_{j=1}^4\alpha_{ij}c_j^c,&amp;space;\quad&amp;space;with&amp;space;\sum_{j=1}^4\alpha_{ij}=1&quot; alt=&quot;p_i^c=\sum_{j=1}^4\alpha_{ij}c_j^c, \quad with \sum_{j=1}^4\alpha_{ij}=1 &quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://latex.codecogs.com/gif.latex?\omega_i&amp;space;\begin{bmatrix}&amp;space;U_i&amp;space;\\&amp;space;V_i&amp;space;\\&amp;space;1&amp;space;\end{bmatrix}&amp;space;=&amp;space;\begin{bmatrix}&amp;space;R&amp;space;&amp;amp;&amp;space;T&amp;space;\end{bmatrix}&amp;space;\begin{bmatrix}&amp;space;X&amp;space;\\&amp;space;Y&amp;space;\\&amp;space;Z&amp;space;\\&amp;space;1&amp;space;\end{bmatrix}&quot; alt=&quot;\omega_i \begin{bmatrix} U_i \ V_i \ 1 \end{bmatrix} = \begin{bmatrix} R &amp;amp; T  \end{bmatrix} \begin{bmatrix} X \ Y \ Z \ 1 \end{bmatrix}&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;in this case,&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://latex.codecogs.com/gif.latex?\begin{bmatrix}&amp;space;R&amp;space;&amp;amp;&amp;space;T&amp;space;\end{bmatrix}&amp;space;\begin{bmatrix}&amp;space;X&amp;space;\\&amp;space;Y&amp;space;\\&amp;space;Z&amp;space;\\&amp;space;1&amp;space;\end{bmatrix}&quot; alt=&quot;\begin{bmatrix} R &amp;amp; T  \end{bmatrix} \begin{bmatrix} X \ Y \ Z \ 1 \end{bmatrix}&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;is matrix multiplication, Present the object point transform from World coordinate to Camera coordinate, meanings the Object position in Camera view, and this can be present by four base points.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://latex.codecogs.com/gif.latex?\sum_{j=1}^4a_{ij}C^c_j&amp;space;=&amp;space;\begin{bmatrix}&amp;space;R&amp;space;&amp;amp;&amp;space;T&amp;space;\end{bmatrix}&amp;space;\begin{bmatrix}&amp;space;X&amp;space;\\&amp;space;Y&amp;space;\\&amp;space;Z&amp;space;\\&amp;space;1&amp;space;\end{bmatrix}&quot; alt=&quot; \sum_{j=1}^4a_{ij}C^c_j = \begin{bmatrix} R &amp;amp; T  \end{bmatrix} \begin{bmatrix} X \ Y \ Z \ 1 \end{bmatrix}&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;so,&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://latex.codecogs.com/gif.latex?\omega_i&amp;space;\begin{bmatrix}&amp;space;U_i&amp;space;\\&amp;space;V_i&amp;space;\\&amp;space;1&amp;space;\end{bmatrix}&amp;space;=&amp;space;\begin{bmatrix}&amp;space;R&amp;space;&amp;amp;&amp;space;T&amp;space;\end{bmatrix}&amp;space;\begin{bmatrix}&amp;space;X&amp;space;\\&amp;space;Y&amp;space;\\&amp;space;Z&amp;space;\\&amp;space;1&amp;space;\end{bmatrix}&amp;space;=&amp;space;Ap_i^c&amp;space;=&amp;space;A\sum_{j=1}^4a_{ij}C^c_j&quot; alt=&quot;\omega_i \begin{bmatrix} U_i \ V_i \ 1 \end{bmatrix} = \begin{bmatrix} R &amp;amp; T  \end{bmatrix} \begin{bmatrix} X \ Y \ Z \ 1 \end{bmatrix} = Ap_i^c = A\sum_{j=1}^4a_{ij}C^c_j&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;and, from the last row, you can find&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://latex.codecogs.com/gif.latex?\omega_i&amp;space;=&amp;space;\sum_{j=1}^4a_{ij}z^c_j&quot; alt=&quot;\omega_i = \sum_{j=1}^4a_{ij}z^c_j&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;so, this matrix can be,&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://latex.codecogs.com/gif.latex?\sum_{j=1}^4\alpha_{ij}f_ux^c_j&amp;plus;\alpha_{ij}(u_c-u_i)z^c_j=0&quot; alt=&quot;\sum_{j=1}^4\alpha_{ij}f_ux^c_j+\alpha_{ij}(u_c-u_i)z^c_j=0 &quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://latex.codecogs.com/gif.latex?\sum_{j=1}^4\alpha_{ij}f_v&amp;space;y^c_j&amp;plus;\alpha_{ij}(v_c-v_i)z^c_j=0&quot; alt=&quot;\sum_{j=1}^4\alpha_{ij}f_v y^c_j+\alpha_{ij}(v_c-v_i)z^c_j=0&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;so, every point have two formulation, so, seems like,&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://latex.codecogs.com/gif.latex?[M][X]&amp;space;=&amp;space;0&quot; alt=&quot;[M][X] = 0&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;[M] is [2n*12] Matrix, [X] is [12*1]  (n meanings the number of Object Points, 12-vector unknow is these four basic points’ position in Camera View.)&lt;/p&gt;
+
+&lt;p&gt;Then, the Question is how to min the Mx. Simple say, The least squares solution is the eigenvector corresponding to the smallest singular value of M ^ TM (最小二乘解就是 M^TM的最小的奇异值所对应的特征向量)。This can get X, meanings C_j^w, base points in Camera coordinate.&lt;/p&gt;
+
+&lt;p&gt;Because of the noise, we can not just get the x from Mx=0, Although we can calculate the x by Least Squares, which can get answer by M^TMx = M^T0, but we can not only focus the min eigenvector in SVD, we need the 2nd min eigenvector and more .&lt;/p&gt;
+
+&lt;p&gt;So we need do SVD from A^TA, get the Vj(j is the last 4 column)&lt;/p&gt;
+
+&lt;p&gt;Reference: &lt;a href=&quot;http://www.doc88.com/p-7317011843934.html&quot;&gt;SVD-PPT-Chinese&lt;/a&gt;&lt;/p&gt;
+
+&lt;h4 id=&quot;32-l--betap&quot;&gt;3.2 L * beta=P&lt;/h4&gt;
+
+&lt;p&gt;Focus on X, we know that the solution is smallest singular value, but with the noise, we have to consider penultimate sigular value and others, so consider the follow formulation.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://latex.codecogs.com/gif.latex?X&amp;space;=&amp;space;\sum_{k&amp;space;=&amp;space;1}^N\beta_kV_k&quot; alt=&quot;X = \sum_{k = 1}^N\beta_kV_k&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;With the paper, we know that the N can be 1,2,3 and 4. When f is small, meanings we choose a small focal length, M^TM have only one zero eigenvalue, however, as the focal length increases and camera becomes closer to being orthograhic, all four smallest eigenvalues approach zero, so the N can be 4. Furthermore, if the correspondences are noisy, the smallest of them will be tiny but not strictly equal to zero.&lt;/p&gt;
+
+&lt;p&gt;if We do not have noise, we can know the N = 1, and the X is the vector which the eigenvalue is zero. but in natural, the noise and the Object points can not be precise, so we have to make N to be 3 or 4.&lt;/p&gt;
+
+&lt;p&gt;so we have to solve beta_k. The stratage is whether in World coordinate or Camera coordinate, the length between two points is static, so,&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://latex.codecogs.com/gif.latex?\Vert&amp;space;c_i^c&amp;space;-&amp;space;c_j^c\Vert^2=\Vert&amp;space;c_i^w&amp;space;-&amp;space;c_j^w\Vert^2&quot; alt=&quot;\Vert c_i^c - c_j^c\Vert^2=\Vert c_i^w - c_j^w\Vert^2&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://latex.codecogs.com/gif.latex?if&amp;space;N&amp;space;=&amp;space;1,&amp;space;\Vert&amp;space;\beta&amp;space;\rm{v}^{[i]}-\beta&amp;space;\rm{v}^{[j]}\Vert^2=\Vert&amp;space;c_i^w&amp;space;-&amp;space;c_j^w\Vert^2&quot; alt=&quot;if N = 1, \Vert \beta \rm{v}^{[i]}-\beta \rm{v}^{[j]}\Vert^2=\Vert c_i^w - c_j^w\Vert^2&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;…&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://rosclub.cn/data/attachment/portal/201612/01/230806q5fqqfzedkkqqsc5.jpg&quot; alt=&quot;EPnP-Solve_beta&quot; /&gt;&lt;/p&gt;
+
+&lt;h4 id=&quot;33-gngaussion-newton-iteration&quot;&gt;3.3 GN(Gaussion Newton iteration)&lt;/h4&gt;
+&lt;p&gt;Iteration beta, min the cost&lt;/p&gt;
+
+&lt;p&gt;![Error(\beta )=\sum &lt;em&gt;{(i,j) i &amp;lt; j}(\Vert c_i^c - c_j^c\Vert^2-\Vert c_i^w - c_j^w\Vert^2)](https://latex.codecogs.com/png.latex?%5Cinline%20Error%28%5Cbeta%20%29%3D%5Csum%20&lt;/em&gt;%7B%28i%2Cj%29%20i%20%3C%20j%7D%28%5CVert%20c_i%5Ec%20-%20c_j%5Ec%5CVert%5E2-%5CVert%20c_i%5Ew%20-%20c_j%5Ew%5CVert%5E2%29)&lt;/p&gt;
+
+&lt;p&gt;have to focus on Jacobi iteration.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://wikimedia.org/api/rest_v1/media/math/render/svg/9fc2ba24e56db5f23265cc45aa7243de4d49e86f&quot; alt=&quot;Jacobi&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;in Newton method:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://latex.codecogs.com/gif.latex?g(x)%7b%5capprox%7dg(%7bx_k%7d)%2bg%27(%7bx_k%7d)(x-%7bx_k%7d)&quot; alt=&quot;first&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://latex.codecogs.com/gif.latex?g(%7bx_k%7d)%2bg%27(%7bx_k%7d)(x-%7bx_k%7d)%3d0&quot; alt=&quot;second&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://latex.codecogs.com/gif.latex?%7bx_%7bk%2b1%7d%7d%3d%7bx_k%7d-%5cfrac%7b1%7d%7b%7bg%27(%7bx_k%7d)%7d%7dg(%7bx_k%7d)&quot; alt=&quot;Thrid&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;so, in our Error:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://latex.codecogs.com/png.latex?%5Cinline%20%5Cbeta_%7Bk&amp;plus;1%7D%3D%5Cbeta_k-%5Cfrac%7B1%7D%7BJ_f%28%5Cbeta_k%29%7DE%28%5Cbeta_k%29&quot; alt=&quot;\beta_{k+1}=\beta_k-\frac{1}{J_f(\beta_k)}E(\beta_k)&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;in Picture, this formulation is :&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://latex.codecogs.com/png.latex?%5Cinline%20J%28%5Cbeta_0%29%5CDelta%5Cbeta%3D-E%28%5Cbeta_0%29&quot; alt=&quot;J(\beta_0)\Delta\beta=-E(\beta_0)&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;like this:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://rosclub.cn/data/attachment/portal/201612/01/230808yqzlbl11qlkkcqk5.jpg&quot; alt=&quot;Epnp-Gn&quot; /&gt;&lt;/p&gt;
+
+&lt;h4 id=&quot;34-recover-3d-points-in-camera-coordinate&quot;&gt;3.4 Recover 3d points in camera coordinate&lt;/h4&gt;
+
+&lt;p&gt;After GN, we can get the best _beta, so we can get the best P^c , with P^w, we can get R and t.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://latex.codecogs.com/gif.latex?X&amp;space;=&amp;space;\sum_{k&amp;space;=&amp;space;1}^N\beta_kV_k&quot; alt=&quot;X = \sum_{k = 1}^N\beta_kV_k&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;![p_i^c=\sum &lt;em&gt;{j=1}^4\alpha _{ij}c_j^c](https://latex.codecogs.com/png.latex?%5Cinline%20p_i%5Ec%3D%5Csum%20&lt;/em&gt;%7Bj%3D1%7D%5E4%5Calpha%20_%7Bij%7Dc_j%5Ec)&lt;/p&gt;
+
+&lt;h4 id=&quot;35-conclusion&quot;&gt;3.5 Conclusion&lt;/h4&gt;
+&lt;p&gt;we can use EPnP get the R and t, then use SOLVEPNP_ITERATIVE GN do the last optimize.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://ws1.sinaimg.cn/large/bc1eaf88ly1febnta7r76j20m30ec15p.jpg&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;h3 id=&quot;4-solvepnp_dls&quot;&gt;4. SOLVEPNP_DLS&lt;/h3&gt;
+&lt;p&gt;todo&lt;/p&gt;
+&lt;h3 id=&quot;5-solvepnp_upnp&quot;&gt;5. SOLVEPNP_UPNP&lt;/h3&gt;
+&lt;p&gt;UPnp is similar with EPnP, but UPnP do not know the matrix of intrinsic parameters, eg.(cx,cy) is a principal point that is usually at the image center ,fx,fy are the focal lengths expressed in pixel units.&lt;/p&gt;
+
+&lt;p&gt;in general, caculate the&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://latex.codecogs.com/gif.latex?%5Cinline%20C_j%5Ec%3D%5Cbegin%7Bbmatrix%7DX_j%5Ec%5C%5CY_j%5Ec%5C%5CZ_j%5Ec%5Cend%7Bbmatrix%7D%3D%5Csum_%7Bk%3D1%7D%5EN%5Cbegin%7Bbmatrix%7D%5Cbeta_kV_%7Bk%2Cx%7D%5Ej%5C%5C%5Cbeta_kV_%7Bk%2Cy%7D%5Ej%5C%5Cf%5Cbeta_kV_%7Bk%2Cz%7D%5Ej%5Cend%7Bbmatrix%7D&quot; alt=&quot;C_j^c=\begin{bmatrix}X_j^c\Y_j^c\Z_j^c\end{bmatrix}=\sum_{k=1}^N\begin{bmatrix}\beta_kV_{k,x}^j\\beta_kV_{k,y}^j\f\beta_kV_{k,z}^j\end{bmatrix}&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;in this case, N can be 1 or 2, sometimes, the with little Object point and too much noise, N have to be 3, but it will take much more time.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://ws1.sinaimg.cn/large/bc1eaf88ly1febzs4ef57j20m60ezdst.jpg&quot; alt=&quot;UPnP&quot; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://ws1.sinaimg.cn/large/bc1eaf88ly1fehfx5b2mtj20lq0emjxy.jpg&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+</description>
+          <pubDate>2017-03-21T00:00:00+08:00</pubDate>
+          <link>/notes/SolvePnP-5-Methods-in-Opencv3.html</link>
+          <guid isPermaLink="true">/notes/SolvePnP-5-Methods-in-Opencv3.html</guid>
+        </item>
+      
+    
+      
+        <item>
+          <title>Install Opencv3 Qt In Debian</title>
+          <description>&lt;p&gt;About Opencv, this is a wonderful CV library. But for some reason, the installation isn’t kindful for begenner.I try to use Visual Studio, but lots of Opencv DLL files makes me crazy. So I choose Debian platform, and Qt, which i feel more comfortable.&lt;/p&gt;
+
+&lt;h3 id=&quot;1-prepare&quot;&gt;1. Prepare&lt;/h3&gt;
+
+&lt;p&gt;We should install some dependencies.&lt;/p&gt;
+
+&lt;h5 id=&quot;ubuntudebian&quot;&gt;Ubuntu/Debian:&lt;/h5&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;ubuntu
+sudo apt-get install qt5-default
+apt-get install libgtk2.0-dev
+apt-get install pkg-config
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;references: &lt;a href=&quot;http://answers.opencv.org/question/46755/first-example-code-error/&quot;&gt;first-example-code-error&lt;/a&gt;&lt;/p&gt;
+
+&lt;h5 id=&quot;centos&quot;&gt;CentOS&lt;/h5&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;yum install cmake gcc gcc-c++ gtk+-devel gimp-devel gimp-devel-tools gimp-help-browser \
+zlib-devel libtiff-devel libjpeg-devel libpng-devel gstreamer-devel \
+libavc1394-devel libraw1394-devel libdc1394-devel \
+jasper-devel jasper-utils swig python libtool nasm 
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;if you don not install these dependecies, maybe you will see this error:&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;OpenCV Error: Unspecified error (The function is not implemented. Rebuild the library with Windows, GTK+ 2.x or Carbon support. If you are on Ubuntu or Debian, install libgtk2.0-dev and pkg-config, then re-run cmake or configure script) in cvNamedWindow,...................
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;you have to remove all Opencv lib, and Reinstall all of them.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;rm /usr/local/lib/libopencv*
+rm -fr /usr/local/include/opencv
+rm -fr /usr/local/include/opencv2
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;2-use-cmake-gui&quot;&gt;2. use cmake-gui&lt;/h3&gt;
+
+&lt;p&gt;Maybe in your Linux, you have install cmake, but not include cmake-gui. Recommand you install cmake-gui to build opencv3.&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;Fill in Opencv3 Source Code, Download from Opencv office site. Choose the file to save build Code.&lt;/li&gt;
+  &lt;li&gt;Click “Configure”&lt;/li&gt;
+  &lt;li&gt;Choose “Unix MakeFiles” and “Use default native compilers”, Click “Finish”&lt;/li&gt;
+  &lt;li&gt;Search for “ With_QT” “With_OPENCL” , if you need Mp4 Video decode, remember “USE_FFMPEG”, but you have to install “ffmpeg” in step 1, if you need opencv_contrib, download it , and fill “OPENCV_EXTRA_MODULESPATH”&lt;/li&gt;
+  &lt;li&gt;Click “Generate”&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;and then, change Directory which your saved build code,&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;make
+make install
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;The Opencv3 lib will install at “/usr/local/lib”&lt;/li&gt;
+  &lt;li&gt;C++ head file will install at /usr/local/include/opencv and opencv2&lt;/li&gt;
+  &lt;li&gt;help Document will install at /usr/local/share/opencv&lt;/li&gt;
+  &lt;li&gt;sample code will install at /usr/local/share/opencv&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;edit &lt;code class=&quot;highlighter-rouge&quot;&gt;opencv.conf&lt;/code&gt;, add “/usr/local/lib” to &lt;code class=&quot;highlighter-rouge&quot;&gt;/etc/ld.so.conf.d/opencv.conf&lt;/code&gt;&lt;/li&gt;
+  &lt;li&gt;add &lt;code class=&quot;highlighter-rouge&quot;&gt;PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig  \
+export PKG_CONFIG_PATH&lt;/code&gt; to &lt;code class=&quot;highlighter-rouge&quot;&gt;/etc/bash.bashrc&lt;/code&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;references: &lt;a href=&quot;http://www.cnblogs.com/emouse/archive/2013/02/22/2922940.html&quot;&gt;Linux 下编译安装OpenCV&lt;/a&gt;&lt;/p&gt;
+
+&lt;h3 id=&quot;3-install-qt&quot;&gt;3. Install QT&lt;/h3&gt;
+&lt;p&gt;Download from Qt Office site.&lt;/p&gt;
+
+&lt;h3 id=&quot;4-focus-on-pro-file&quot;&gt;4. Focus on .pro file&lt;/h3&gt;
+&lt;p&gt;New a “Qt Console Application”, and change the .pro to this:&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;QT += core
+QT -= gui
+
+CONFIG += c++11
+
+TARGET = &quot;Your Project Name&quot;
+CONFIG += console
+CONFIG -= app_bundle
+INCLUDEPATH += .
+INCLUDEPATH += /usr/local/include/
+
+LIBS += -L/usr/local/lib/ -I/usr/local/include -lopencv_core -lopencv_highgui -lopencv_imgproc -lopencv_aruco -lopencv_imgcodecs
+# [!!!] sometime you should add this LIBS path include.
+
+TEMPLATE = app
+
+SOURCES += main.cpp
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;5-test-it&quot;&gt;5. Test it!&lt;/h3&gt;
+&lt;p&gt;your main.cpp&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;#include &amp;lt;opencv2/core/core.hpp&amp;gt;
+#include &amp;lt;opencv2/imgproc/imgproc.hpp&amp;gt;
+#include &amp;lt;opencv2/highgui/highgui.hpp&amp;gt;
+#include &amp;lt;opencv2/aruco.hpp&amp;gt;
+#include &amp;lt;strstream&amp;gt;
+using namespace cv;
+using namespace std;
+
+int main()
+{
+    Mat img=imread(&quot;pic.jpg&quot;);
+    imshow(&quot;show&quot;, img);
+    waitKey();
+    destroyAllWindows();
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+</description>
+          <pubDate>2017-02-28T00:00:00+08:00</pubDate>
+          <link>/notes/Install-OpenCV3-QT-in-Debian.html</link>
+          <guid isPermaLink="true">/notes/Install-OpenCV3-QT-in-Debian.html</guid>
+        </item>
+      
+    
+      
+        <item>
+          <title>How to build this site</title>
+          <description>&lt;p&gt;To my honor, I just set this site, and i’ll write down all the things about how to build this web by digitalocean, docker, gogs, jekyll, nginx, namecheap.&lt;/p&gt;
+
+&lt;p&gt;Let’s start.&lt;/p&gt;
+
+&lt;h2 id=&quot;create-a-vps&quot;&gt;Create a VPS&lt;/h2&gt;
+&lt;p&gt;First of all, we need a VPS(Virtual Personal Server). I used use Aliyun Service, but for some policy, we have to register our website to the government, otherwise our web site will be block with a Slogan “According some layws and rules, Please record your website”. Without record, you can’t visit the website by domain. so, we choose some service abroad, like digitalocean or Linode.&lt;/p&gt;
+
+&lt;p&gt;i create a Droplet(VPS) use Centos, so you should create a droplet and follow the tutorial like following link, of course you can use other linux distribution, like ubuntu or debian, maybe you can choose CoreOS, which support docker in operating system level.&lt;/p&gt;
+
+&lt;blockquote&gt;
+
+  &lt;p&gt;&lt;a href=&quot;https://www.digitalocean.com/community/tutorials/initial-server-setup-with-centos-7&quot; title=&quot;Initial Server Setup with CentOS 7&quot;&gt;initial-server-setup-with-centos-7&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;&lt;a href=&quot;https://www.digitalocean.com/community/tutorials/additional-recommended-steps-for-new-centos-7-servers&quot; title=&quot;Additional Recommended Steps for New CentOS 7 Servers&quot;&gt;additional-recommended-steps-for-new-centos-7-servers&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;That all about digitalocean. remember your droplet ip address and your sudo user password.&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;caution: we use docker for nginx and gogs, but docker requires a 64-bit OS and version 3.10 or higher of the Linux kernel, So before create VPS (but digitalocean support Droplet change kernel online), caution the kernel and 64-bit.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h2 id=&quot;install-docker&quot;&gt;Install Docker&lt;/h2&gt;
+&lt;p&gt;because my platform is Centos 7, so i follow the &lt;a href=&quot;https://docs.docker.com/engine/installation/linux/centos/&quot;&gt;CentOS install docker&lt;/a&gt; .&lt;/p&gt;
+
+&lt;p&gt;if you choose other OS, you can google how to install docker in your OS . After this, I recommend you take a Snapshot for your VPS, if you don’t know how to do , google how to take a snapshot in digitalocean( or other service provider )&lt;/p&gt;
+
+&lt;h2 id=&quot;get-a-domain&quot;&gt;Get a domain&lt;/h2&gt;
+
+&lt;p&gt;next, you need a domain name. visit &lt;a href=&quot;https://www.namecheap.com/&quot;&gt;namecheap&lt;/a&gt; or &lt;a href=&quot;https://www.name.com/&quot;&gt;name&lt;/a&gt; , purchase a domain, maybe .me, .club, or .online is cheaper.&lt;/p&gt;
+
+&lt;p&gt;At this time, after purchase,  visit the Dashboard, try to manager your domain. first, check the Domain nameservers, at namecheap, choose “Namecheap BasicDNS”, and then modify the Host Recrods.&lt;/p&gt;
+
+&lt;p&gt;This is my setting:&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th&gt;Type&lt;/th&gt;
+      &lt;th style=&quot;text-align: center&quot;&gt;host&lt;/th&gt;
+      &lt;th style=&quot;text-align: right&quot;&gt;value&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;A Record&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;www&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;{your VPS server IP address}&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;A Record&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;api&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;{your VPS server IP address}&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;A Record&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;blog&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;{your VPS server IP address}&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;A Record&lt;/td&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;@&lt;/td&gt;
+      &lt;td style=&quot;text-align: right&quot;&gt;{your VPS server IP address}&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;All the subdomains , like www.example.com, blog.example.com are directed to your server indifferent , but of course the different subdomain should show different content. So we need NGINX Reverse Proxy.&lt;/p&gt;
+
+&lt;h2 id=&quot;get-certificate&quot;&gt;Get Certificate&lt;/h2&gt;
+&lt;p&gt;before Set nginx reverse proxy, we have something else to do. use let’s encrypt to encrypt our website connection. This part i do get important use from this artical &lt;a href=&quot;https://zettabyte.me/lets-encrypt-with-docker-nginx-proxy/&quot;&gt;LETS ENCRYPT WITH DOCKER NGINX PROXY&lt;/a&gt; you also can reference this.&lt;/p&gt;
+
+&lt;p&gt;but i just just use his method to get certificate, and the next, i’ll explanation the nginx-reverse proxy and other website docker.&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;Caution:  The certificate Let’s encrypt provided Only three months validity,  you should re encrypt after three months late.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h2 id=&quot;nginx-reverse-proxy&quot;&gt;Nginx Reverse Proxy&lt;/h2&gt;
+&lt;p&gt;Because we install docker, and we are ready for the certificate, so we can do this easy for one command.&lt;/p&gt;
+
+&lt;p&gt;with my method, create  &lt;code class=&quot;highlighter-rouge&quot;&gt;/nimo_nginx_confAndcontent/html&lt;/code&gt; &lt;code class=&quot;highlighter-rouge&quot;&gt;/nimo_nginx_confAndcontent/conf.d&lt;/code&gt; for our proxy-nginx local volume, maybe you should read some document about what is docker.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;docker run -d -p 80:80 -p 443:443 --name=proxy --restart=always -v /var/local/nginx/certs:/etc/nginx/certs -v /etc/letsencrypt:/etc/letsencrypt -v /var/local/proxy-confs:/etc/nginx/vhost.d:ro -v /var/run/docker.sock:/tmp/docker.sock:ro -v /nimo_nginx_confAndcontent/html:/usr/share/nginx/html -v /nimo_nginx_confAndcontent/conf.d:/etc/nginx/conf.d nginx
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;caution: in my method, I put the certificate in &lt;code class=&quot;highlighter-rouge&quot;&gt;/etc/letsencrypt/live/&lt;/code&gt; , and i create a soft link in &lt;code class=&quot;highlighter-rouge&quot;&gt;/var/local/nginx/certs/&lt;/code&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;and then is the nginx config: cd &lt;code class=&quot;highlighter-rouge&quot;&gt;/nimo_nginx_confAndcontent/conf.d/&lt;/code&gt; set a config file &lt;code class=&quot;highlighter-rouge&quot;&gt;default.conf&lt;/code&gt; like this:&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;# If we receive X-Forwarded-Proto, pass it through; otherwise, pass along the
+# scheme used to connect to this server
+map $http_x_forwarded_proto $proxy_x_forwarded_proto {
+  default $http_x_forwarded_proto;
+  ''      $scheme;
+}
+# If we receive Upgrade, set Connection to &quot;upgrade&quot;; otherwise, delete any
+# Connection header that may have been passed to this server
+map $http_upgrade $proxy_connection {
+  default upgrade;
+  '' close;
+}
+gzip_types text/plain text/css application/javascript application/json application/x-javascript text/xml application/xml application/xml+rss text/javascript;
+log_format vhost '$host $remote_addr - $remote_user [$time_local] '
+                 '&quot;$request&quot; $status $body_bytes_sent '
+                 '&quot;$http_referer&quot; &quot;$http_user_agent&quot;';
+access_log off;
+# HTTP 1.1 support
+proxy_http_version 1.1;
+proxy_buffering off;
+proxy_set_header Host $http_host;
+proxy_set_header Upgrade $http_upgrade;
+proxy_set_header Connection $proxy_connection;
+proxy_set_header X-Real-IP $remote_addr;
+proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+proxy_set_header X-Forwarded-Proto $proxy_x_forwarded_proto;
+# Mitigate httpoxy attack (see README for details)
+proxy_set_header Proxy &quot;&quot;;
+server {
+    server_name _; # This is just an invalid value which will never trigger on a real hostname.
+    listen 80;
+    access_log /var/log/nginx/access.log vhost;
+    return 503;
+}
+upstream website{
+            # nginx (this is www.nimohunter.com and nimohunter.com nginx-web-docker-ip)
+            # !!! need modify !!!
+            server 172.17.0.3:80; 
+}
+
+server {
+    server_name nimohunter.com www.nimohunter.com;
+    listen 80 ;
+    access_log /var/log/nginx/access.log vhost;
+    return 301 https://$host$request_uri;
+}
+
+server {
+	# !!! need modify !!! modify to your domain
+    server_name example.com www.example.com;
+    listen 443 ssl http2 ;
+    access_log /var/log/nginx/access.log vhost;
+    ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+    ssl_ciphers 'ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA:ECDHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-RSA-AES256-SHA256:DHE-RSA-AES256-SHA:ECDHE-ECDSA-DES-CBC3-SHA:ECDHE-RSA-DES-CBC3-SHA:EDH-RSA-DES-CBC3-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:DES-CBC3-SHA:!DSS';
+    ssl_prefer_server_ciphers on;
+    ssl_session_timeout 5m;
+    ssl_session_cache shared:SSL:50m;
+    ssl_session_tickets off;
+    ssl_certificate /etc/nginx/certs/shared.crt;
+    ssl_certificate_key /etc/nginx/certs/shared.key;
+    add_header Strict-Transport-Security &quot;max-age=31536000&quot;;
+    location / {
+        proxy_pass http://website;
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;focus on something like &lt;code class=&quot;highlighter-rouge&quot;&gt;!!! need modify !!!&lt;/code&gt; and we should modify this in next part.&lt;/p&gt;
+
+&lt;h2 id=&quot;nginx-web-docker&quot;&gt;Nginx Web Docker&lt;/h2&gt;
+&lt;p&gt;After the nginx-reverse-proxy, we can create our website finally! you can use apache2 or nginx for your website. in this case, i still use nginx.&lt;/p&gt;
+
+&lt;p&gt;Create a folder in &lt;code class=&quot;highlighter-rouge&quot;&gt;/nimo_www/html&lt;/code&gt;   (of course you can use another folder), and then run docker command&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;docker run -d --restart=always --name=web -v /nimo_www/html:/usr/share/nginx/html  nginx
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;and then, get the this docker’s ip use :&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;docker inspect --format='' $CONTAINER_ID
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;get the IP address like &lt;code class=&quot;highlighter-rouge&quot;&gt;172.17.0.3&lt;/code&gt; modify these in &lt;code class=&quot;highlighter-rouge&quot;&gt;default.conf&lt;/code&gt;&lt;/p&gt;
+
+&lt;hr /&gt;
+&lt;p&gt;After these, you can visit your domain , you can get a security SSL https about a page “Welcome use nginx.” but what is our blog?  you should read the follow.&lt;/p&gt;
+
+&lt;p&gt;let’s continue.&lt;/p&gt;
+
+&lt;h2 id=&quot;use-jekyll-&quot;&gt;Use Jekyll !&lt;/h2&gt;
+&lt;p&gt;read some document about &lt;a href=&quot;http://jekyllrb.com/&quot;&gt;jekyll&lt;/a&gt; , our website need is &lt;code class=&quot;highlighter-rouge&quot;&gt;_site&lt;/code&gt; folder. For a easy way , visit &lt;a href=&quot;http://jekyllthemes.org/&quot;&gt;jekyll theme&lt;/a&gt;, clone a theme you like and modify.&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;read  &lt;a href=&quot;http://jekyllrb.com/&quot;&gt;jekyll Official website &lt;/a&gt;  for help, this is a lot help for you.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;After you see your jekyll website in local machine. your can put all the file in &lt;code class=&quot;highlighter-rouge&quot;&gt;_site&lt;/code&gt; to your VPS’s &lt;code class=&quot;highlighter-rouge&quot;&gt;/nimo_www/html&lt;/code&gt;, then you can see your blog.&lt;/p&gt;
+
+&lt;p&gt;But, This is stupid, This means you should put your website manually, how can i update my website automatic refreshing ? 
+use gogs.&lt;/p&gt;
+
+&lt;h2 id=&quot;use-gogs&quot;&gt;use Gogs！&lt;/h2&gt;
+&lt;p&gt;you can think Gogs as a private github, and with docker, you can install gogs in one  command.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;mkdir /var/data/gogs
+docker run -d --name=gogs -p 10022:22 -p 3000:3000 -v /var/data/gogs:/data gogs/gogs
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;that is all, visit your Ip address:3000 , make some initialization. i get some useful info from &lt;a href=&quot;http://www.onlyeric.com/2016/05/03/%E4%BD%BF%E7%94%A8Docker%E5%92%8CHexo%E6%89%93%E9%80%A0DevOps%E4%B8%AA%E4%BA%BA%E9%9D%99%E6%80%81%E5%8D%9A%E5%AE%A2-%E4%B8%89-%E6%9C%8D%E5%8A%A1%E7%AB%AF%E7%AF%87/&quot;&gt;使用Docker和Hexo打造DevOps个人静态博客&lt;/a&gt;&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;Database Type==&amp;gt;SQLite3
+Path==&amp;gt;data/gogs.db
+Application Name==&amp;gt;Gogs:Go Git Service
+Repository Root Path==&amp;gt;/data/git/gogs-repositories
+Run User==&amp;gt;git
+#domain can use your domain, or IP address
+Domain==&amp;gt;126.154.12.45
+SSH Port==&amp;gt;10022
+HTTP Port==&amp;gt;3000
+Application URL==&amp;gt;http://126.154.12.45
+Log Path==&amp;gt;/app/gogs/log
+Username==&amp;gt; 
+Passoword==&amp;gt; 
+Confirm Password==&amp;gt; 
+Admin Email==&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;and then, set git hooks. Git hook is a script for Git server , some detail you can visit &lt;a href=&quot;https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks&quot;&gt;8.3 Customizing Git - Git Hooks&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;at this time, we use the function which git provided &lt;code class=&quot;highlighter-rouge&quot;&gt;post-receive&lt;/code&gt; , which will be call after a new push. that’s what we need.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;docker-enter gogs
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;docker-enter is a small tool for docker, much better than docker attach.
+intall tools:&lt;/p&gt;
+  &lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;wget -P ~ https://github.com/yeasy/docker_practice/raw/master/_local/.bashrc_docker;
+echo “[ -f ~/.bashrc_docker ] &amp;amp;&amp;amp; . ~/.bashrc_docker” &amp;gt;&amp;gt; ~/.bashrc; source ~/.bashrc
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;  &lt;/div&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;then, into gogs-docker, add a script&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;su - git
+vi deploy.sh
+chmod u+x deploy.sh
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;here is &lt;code class=&quot;highlighter-rouge&quot;&gt;deploy.sh&lt;/code&gt; :&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;#!/bin/bash&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;cd&lt;/span&gt; /data/git
+&lt;span class=&quot;c&quot;&gt;#modify!!! git chone from your gogs blog&lt;/span&gt;
+git clone ssh://git@gogs.onlyeric.com:10022/ericcheung/blog.git
+&lt;span class=&quot;c&quot;&gt;# scp the blog content to nginx-web content directory&lt;/span&gt;
+scp &lt;span class=&quot;nt&quot;&gt;-r&lt;/span&gt; blog/_site/&lt;span class=&quot;k&quot;&gt;*&lt;/span&gt; user@example.com:/var/data/www
+&lt;span class=&quot;nb&quot;&gt;rm&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-rf&lt;/span&gt; blog
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Because we use &lt;code class=&quot;highlighter-rouge&quot;&gt;scp&lt;/code&gt;, so we need add key trust between docker-gogs and local VPS host, do these follow:&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;docker-enter gogs
+ssh-keygen -t rsa
+ssh-copy-id -i ~/??Modify?/id_rsa.pub  user@yourdomain
+#maybe you will use: ssh-copy-id -i ~/??Modify?/id_rsa.pub -p 2451 user@yourdomain
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;after this , you can try ssh to local VPS in docker container-gogs. test it, if the result is ok, so this &lt;code class=&quot;highlighter-rouge&quot;&gt;scp&lt;/code&gt; can work, and the &lt;code class=&quot;highlighter-rouge&quot;&gt;deploy.sh&lt;/code&gt; can work, then all the thing is done.&lt;/p&gt;
+
+</description>
+          <pubDate>2016-10-21T00:00:00+08:00</pubDate>
+          <link>/notes/how-to-build-this-site.html</link>
+          <guid isPermaLink="true">/notes/how-to-build-this-site.html</guid>
+        </item>
+      
+    
+      
+        <item>
+          <title>Download this Theme</title>
+          <description>&lt;p&gt;This is a minimalist Jekyll theme built to focus on writing stuffs that matter. Suitable to be used as a personal blog!&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;&lt;strong&gt;&lt;em&gt;Fork&lt;/em&gt;&lt;/strong&gt; or &lt;strong&gt;&lt;em&gt;download&lt;/em&gt;&lt;/strong&gt; the theme &lt;a href=&quot;https://github.com/heiswayi/the-plain&quot;&gt;&lt;strong&gt;here&lt;/strong&gt;&lt;/a&gt;.&lt;/p&gt;
+&lt;/blockquote&gt;
+</description>
+          <pubDate>2015-09-09T00:00:00+08:00</pubDate>
+          <link>/notes/download-this-theme.html</link>
+          <guid isPermaLink="true">/notes/download-this-theme.html</guid>
+        </item>
+      
+    
+  </channel>
+</rss>
